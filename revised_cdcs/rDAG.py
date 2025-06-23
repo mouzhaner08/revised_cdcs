@@ -4,11 +4,11 @@ from revised_cdcs.utils import *
 
 class GenerateCausalGraph:
     """
-    A class to simulate linear structural equation models on random DAGs
+    A class to simulate linear structural equation models on random DAGs.
 
     This class generates causal DAGs, simulates data from them using additive noise models, 
     and supports multiple non-Gaussian error distributions. It also provides utility methods to
-    extract parent sets and enumerate valid topological orderings
+    extract parent sets and enumerate valid topological orderings.
     ---------------------------------------------------------------------------
     ARGUMENTS:
     p : int
@@ -43,7 +43,7 @@ class GenerateCausalGraph:
 
     def get_scale(self) -> np.ndarray:
         """
-        Generate an array of random scales for each variable
+        Generate an array of random scales for each variable.
         """
         return np.random.uniform(low=self.low_scale, high=self.high_scale, size=self.p)
 
