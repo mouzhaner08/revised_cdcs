@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List, Tuple
-from revised_cdcs.utils import *
+from revised_cdcs.config import *
 
 class GenerateCausalGraph:
     """

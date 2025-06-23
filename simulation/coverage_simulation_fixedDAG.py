@@ -1,3 +1,14 @@
+"""
+This simulation differs from the original design (in coverage_simulation.py) in that it evaluates
+coverage using a **single fixed DAG** across all simulation runs.
+
+Whereas coverage_simulation.py generates a new DAG in each iteration (to mimic the randomness in 
+causal structure as in the original Wang et al. paper), this script holds the DAG fixed and calculate 
+the coverage rate based on formula (1.2) in the paper.
+
+Use this version when studying stability or behavior of the method for a specific known causal graph.
+"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -7,27 +18,11 @@ from math import factorial
 from revised_cdcs.testAn import compute_test_tensor_G
 from revised_cdcs.bnb import ConfidenceSet
 from revised_cdcs.rDAG import GenerateCausalGraph
-
-# global parameters
-p = 3
-dist_list = ['unif']
-n_list = [1000]
-n_simulations = 100
-H = ['poly2', 'poly3', 'sign25', 'sin1', 'cos1', 'sin2', 'cos2']
-alpha = 0.1
-bs = 400
-K = 5
-
-# DAG generation config
-parent_prob = 1/3
-low_scale = 0.8
-high_scale = 1.0
-coef = 1.0
-uniqueTop = 'T'
+from revised_cdcs.config import *
 
 def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_true_orderings):
     """
-    Run a single simulation instance using a fixed DAG and collect coverage metrics.
+    Run simulation study using a fixed DAG to evaluate coverage of confidence sets for causal orderings.
 
     ---------------------------------------------------------------------------
     ARGUMENTS:
@@ -53,7 +48,7 @@ def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_tr
     B, Y, errors, scale = D.generate_data(B)
     true_orderings = D.get_all_orderings(B)
 
-    cs = ConfidenceSet(Y=Y, bs=bs, alpha=alpha, basis='poly', K=5,
+    cs = ConfidenceSet(Y=Y, bs=bs, alpha=alpha, basis='poly', K=K,
                        agg_type=3, p_value_agg="tippett", intercept=True, verbose=False)
     conf_set_df = cs.branchAndBound()
     conf_set = [tuple(row[1:].astype(int)) for _, row in conf_set_df.iterrows()]
@@ -72,7 +67,7 @@ def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_tr
     sim_coverage[i] = int(all(matches))
 
 
-def run_simulation(n_simulations: int, p: int, n: int, dist: str):
+def run_simulation(n_simulations, p, n, dist):
     """
     Run multiple simulations to evaluate confidence set performance under a given error distribution.
 
@@ -101,6 +96,7 @@ def run_simulation(n_simulations: int, p: int, n: int, dist: str):
     D = GenerateCausalGraph(p=p, n=n, error_dist=dist, coef=coef,
                             low_scale=low_scale, high_scale=high_scale,
                             uniqueTop=uniqueTop, parent_prob=parent_prob)
+    B = D.generate_B()
 
     num_true_orderings = np.zeros(n_simulations)
     prop_true_orderings_covered = np.zeros(n_simulations, dtype=float)
@@ -108,13 +104,12 @@ def run_simulation(n_simulations: int, p: int, n: int, dist: str):
     sim_coverage = np.zeros(n_simulations, dtype=int)
 
     for i in tqdm(range(n_simulations), desc=f"Simulating dist={dist}"):
-        B = D.generate_B()
         run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_true_orderings)
 
     return size, num_true_orderings, prop_true_orderings_covered, sim_coverage
 
 
-def summarize_and_save(results: list, p: int, n: int, n_simulations: int) -> pd.DataFrame:
+def summarize_and_save(results, p, n, n_simulations):
     """
     Summarize simulation results and write them to a CSV file.
 
@@ -138,12 +133,12 @@ def summarize_and_save(results: list, p: int, n: int, n_simulations: int) -> pd.
     df['permutation'] = factorial(p)
     df = df[['dist', 'p', 'n', 'permutation', 'avg_true_orderings', 'std_true_orderings',
              'avg_set_size', 'std_set_size', 'sim_coverage', 'marginal_coverage']]
-    
-    output_dir = os.path.join(os.path.dirname(__file__), 'results', 'random_DAG')
+
+    output_dir = os.path.join(os.path.dirname(__file__), 'results', 'fixed_DAG')
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(
         output_dir,
-        f"coverage_summary_p={p}_n={n}_sim={n_simulations}_uniqueTop={uniqueTop}.csv"
+        f"coverage_summary_p={p}_n={n}_sim={n_simulations}.csv"
     )
     df.to_csv(output_path, index=False)
     return df
