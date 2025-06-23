@@ -13,18 +13,18 @@ The goal is to reproduce the simulation results and confidence sets for causal o
 - `bnb_helper_anm.py`: Helper functions to evaluate p-values for candidate parent sets under the ANM framework.
 - `testAn.py`: Defines a library of test functions used in hypothesis testing within the ANM model.
 - `rDAG.py`: Functions to generate random DAGs with additive noise and configurable edge weights and noise distributions.
-- `utils.py`: Utility functions used across modules, including statistical tests and graph operations.
+- `config.py`: Utility functions used across modules, including statistical tests and graph operations.
 - `coverage_simulation_randomDAG.py`: Runs simulation studies varying data distributions, sample sizes, and number of variables. Uses a different DAG for each replicate.
 - `coverage_simulation_fixedDAG.py`: Same as above but uses the same DAG across all replicates for a fixed benchmark comparison.
 
 ## Installation
 
-This code requires the following Python packages:
+Clone the repository and install the package in **editable mode**:
 
-- `numpy`
-- `scipy`
-- `pandas`
-- `tqdm`
+```bash
+git clone https://github.com/mouzhaner08/revised_cdcs.git
+cd revised_cdcs
+pip install -e .
 
 
 ## How to Run Simulations
@@ -45,7 +45,7 @@ This repository includes two simulation scripts to evaluate coverage properties 
 To run a coverage simulation using different DAGs per replicate:
 
 ```bash
-python coverage_simulation_randomDAG.py
+python -m simulation.coverage_simulation_randomDAG
 ```
 
 ### 2. `coverage_simulation_fixedDAG.py` (Controlled single-DAG evaluation)
@@ -58,7 +58,7 @@ python coverage_simulation_randomDAG.py
 To run a simulation using a fixed DAG across replicates:
 
 ```bash
-python coverage_simulation_fixedDAG.py
+python -m simulation.coverage_simulation_fixedDAG
 ```
 
 ### Example Output
