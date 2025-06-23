@@ -1,7 +1,5 @@
 import numpy as np
-from sklearn.preprocessing import SplineTransformer
-
-from sklearn.preprocessing import scale  # Same as R's scale()
+from sklearn.preprocessing import SplineTransformer, scale
 
 def compute_test_tensor_G(Y: np.ndarray) -> np.ndarray:
     """

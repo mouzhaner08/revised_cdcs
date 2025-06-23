@@ -14,8 +14,8 @@ The goal is to reproduce the simulation results and confidence sets for causal o
 - `testAn.py`: Defines a library of test functions used in hypothesis testing within the ANM model.
 - `rDAG.py`: Functions to generate random DAGs with additive noise and configurable edge weights and noise distributions.
 - `utils.py`: Utility functions used across modules, including statistical tests and graph operations.
-- `coverage_simulation.py`: Runs simulation studies varying data distributions, sample sizes, and number of variables. Uses a different DAG for each replicate.
-- `coverage_simulation_sameB.py`: Same as above but uses the same DAG across all replicates for a fixed benchmark comparison.
+- `coverage_simulation_randomDAG.py`: Runs simulation studies varying data distributions, sample sizes, and number of variables. Uses a different DAG for each replicate.
+- `coverage_simulation_fixedDAG.py`: Same as above but uses the same DAG across all replicates for a fixed benchmark comparison.
 
 ## Installation
 
@@ -29,19 +29,37 @@ This code requires the following Python packages:
 
 ## How to Run Simulations
 
+This repository includes two simulation scripts to evaluate coverage properties of confidence sets for causal orderings. Each reflects a different design philosophy:
+
+
+
+### 1. `coverage_simulation_randomDAG.py` (Follows the original paper)
+
+- **DAG generation**: A new DAG is generated for each simulation iteration (`B = D.generate_B()` inside the loop).
+- **Coverage** is computed with respect to the **true orderings of each newly generated DAG**, meaning:
+  - Each simulation may have a different valid ordering set.
+  - Results reflect the **average coverage behavior across random DAGs**.
+- This setup replicates the design in the original paper:  
+  _Wang et al., "Confidence Sets for Causal Orderings" (2024)_
+
 To run a coverage simulation using different DAGs per replicate:
 
 ```bash
-python coverage_simulation.py
+python coverage_simulation_randomDAG.py
 ```
+
+### 2. `coverage_simulation_fixedDAG.py` (Controlled single-DAG evaluation)
+
+- **DAG generation**: A single DAG is generated **once**, and reused across all simulations.
+- **Coverage** is computed with respect to the **same set of true orderings**, across datasets simulated from that fixed DAG.
+- This evaluates how **sampling variability alone** affects the confidence set construction.
+- Useful for controlled studies, debugging, or stress-testing inference under fixed structure.
 
 To run a simulation using a fixed DAG across replicates:
 
 ```bash
-python coverage_simulation_sameB.py
+python coverage_simulation_fixedDAG.py
 ```
-
-Simulation parameters such as number of simulations (`n_simulations`), sample size (`n`), number of variables (`p`), noise distribution, and bootstrap size (`B`) can be edited directly in the corresponding `.py` files.
 
 ### Example Output
 

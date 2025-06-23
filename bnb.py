@@ -3,8 +3,8 @@ import pandas as pd
 from scipy import stats
 from scipy.special import eval_hermite
 from typing import List, Tuple, Dict, Optional
-from UncertaintyQuantification.bnb_helper_anm import bnb_helper_anm
-from UncertaintyQuantification.testAn import compute_test_tensor_G
+from revised_cdcs.bnb_helper_anm import bnb_helper_anm
+from revised_cdcs.testAn import compute_test_tensor_G
 
 def map_var_to_indices(variables, K):
     """

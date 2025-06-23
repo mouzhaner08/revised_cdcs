@@ -31,3 +31,20 @@ bs = 400
 # ------------------------
 # bnb.py
 alpha = 0.1
+
+# global parameters
+p = 3
+dist_list = ['unif']
+n_list = [1000]
+n_simulations = 100
+H = ['poly2', 'poly3', 'sign25', 'sin1', 'cos1', 'sin2', 'cos2']
+alpha = 0.1
+bs = 400
+K = 5
+
+# DAG generation config
+parent_prob = 1/3
+low_scale = 0.8
+high_scale = 1.0
+coef = 1.0
+uniqueTop = 'T'

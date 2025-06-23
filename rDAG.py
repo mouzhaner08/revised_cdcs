@@ -1,31 +1,34 @@
-"""
-Generate causal graph DAG
-function:
-    - generate_data(): simuate causal graph for GOF comparison
-    - generate_data_confidence_sets(): simulate causal graph for constructing confidence sets
---------------
-param:
-    - p: the number of variables
-    - n: the number of samples
-    - error_dist: the distribution of errors 
-        ('gauss', 'unif', 'lognorm', 'gamma', 'weibull', 'laplace', 'mixed', 't')
-    - low_scale: the smallest possible error std
-    - high_scale: the highest possible error std
-    - uniqueTop: whether guarantee edge v-1->v for all v<=p
-    - parent_prob: the probability of having an edge u->v for any u<v-1
-
-return:
-    - B: true linear coefficients (pxp)
-    - Y: realized values (nxp)
-    - errors: the idiosyncratic errors (nxp)
-    - scale: std of each error variable 
-"""
-
 import numpy as np
-from typing import List
-from utils import *
+from typing import List, Tuple
+from revised_cdcs.utils import *
 
 class GenerateCausalGraph:
+    """
+    A class to simulate linear structural equation models on random DAGs
+
+    This class generates causal DAGs, simulates data from them using additive noise models, 
+    and supports multiple non-Gaussian error distributions. It also provides utility methods to
+    extract parent sets and enumerate valid topological orderings
+    ---------------------------------------------------------------------------
+    ARGUMENTS:
+    p : int
+        Number of variables (nodes) in the DAG.
+    n : int
+        Number of samples to generate.
+    error_dist : str
+        Distribution of error terms. Must be one of:
+        ['gauss', 'unif', 'lognormal', 'gamma', 'weibull', 'laplace'].
+    coef : list
+        Placeholder for coefficient settings (typically unused if coefficients are drawn randomly).
+    low_scale : float
+        Minimum standard deviation for error terms.
+    high_scale : float
+        Maximum standard deviation for error terms.
+    uniqueTop : str
+        Whether to enforce a unique top node by adding edges from v–1 to v (use 'T' to enable).
+    parent_prob : float
+        Probability of including an edge u → v for u < v–1.
+    """
     def __init__(self, p:int, n:int, error_dist:str, coef:list, 
                  low_scale:int, high_scale:int, uniqueTop:str,
                  parent_prob:int):
@@ -38,10 +41,16 @@ class GenerateCausalGraph:
         self.uniqueTop = uniqueTop
         self.parent_prob = parent_prob
 
-    def get_scale(self):
+    def get_scale(self) -> np.ndarray:
+        """
+        Generate an array of random scales for each variable
+        """
         return np.random.uniform(low=self.low_scale, high=self.high_scale, size=self.p)
 
-    def get_error(self, scale):
+    def get_error(self, scale: np.ndarray) -> np.ndarray:
+        """
+        Generate error terms based on the specified distributions and provided scale.
+        """
         if self.error_dist == 'gauss':
             errors = np.random.normal(loc=0, scale=1, size=(self.n, self.p))
         if self.error_dist == 'unif':
@@ -59,7 +68,10 @@ class GenerateCausalGraph:
             raise TypeError('Consider error terms either uniform, lognormal, gamma, Weibull, or Laplace.')
         return np.multiply(errors, scale)
     
-    def generate_B(self):
+    def generate_B(self) -> np.ndarray:
+        """
+        Generate a random weighted adjacency matrix B for a DAG based on the edge rules.
+        """
         B = np.zeros((self.p, self.p))
         for v in range(2, self.p+1):
             # add edges u -> v with pre-assigned prob for any u < v-1
@@ -75,7 +87,11 @@ class GenerateCausalGraph:
             B[v-1, :v-1] = parents
         return B
     
-    def generate_data(self, B):
+    def generate_data(self, B: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Simulate data Y from the model using the DAG structure B and return B, data Y,
+        the raw error terms, and the error scales.
+        """
         scale = self.get_scale()
         errors = self.get_error(scale)
         Y = np.linalg.solve(np.diag(np.ones(self.p))-B, np.transpose(errors))
@@ -83,19 +99,15 @@ class GenerateCausalGraph:
         Y = (Y-np.mean(Y, axis=0)) / np.std(Y, axis=0)    # standardize Y
         return B, Y, errors, scale
     
-    # generate the parent list for each variable
-    def get_corret_parents_list_idx(self, B, v):
+    def get_corret_parents_list_idx(self, B: np.ndarray, v: int) -> List[int]:
+        """
+        Generate error terms based on the specified distribution and provided scale.
+        """
         return np.nonzero(B[v, :])[0].tolist()
     
     def get_all_orderings(self, B: np.ndarray) -> List[tuple]:
         """
-        Find all valid causal orderings (topological orderings) of a DAG given its adjacency matrix B.
-    
-        Args:
-            B: p x p coefficient matrix where B[i,j] != 0 indicates an edge j -> i
-    
-        Returns:
-            List of all valid orderings (each represented as a tuple of node indices)
+        Return the list of parent indices for variable v based on the matrix B.
         """
         children = {i: [] for i in range(self.p)}
         in_degree = [0] * self.p

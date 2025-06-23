@@ -2,7 +2,7 @@ import numpy as np
 
 def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept):
     """
-    Python equivalent of bnbHelperanm.cpp (line-by-line)
+    Python equivalent of bnbHelperanm.cpp
 
     Parameters:
         ancest: (n, q) matrix of ancestor features (e.g., Hermite basis)
