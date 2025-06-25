@@ -54,8 +54,7 @@ class ConfidenceSet:
     """
     def __init__(self, Y:np.ndarray, bs: int = 200,
                  alpha: float = 0.05, basis: str = 'bspline',agg_type: int = 3, p_value_agg: str = "tippett", 
-                 K: int = 5,
-                 intercept: bool = True, verbose: bool = True):
+                 K: int = 5, intercept: bool = True, verbose: bool = True):
         self.Y = Y
         self.G = compute_test_tensor_G(self.Y) # shape (n, k=7, p)
         self.bs = bs
@@ -71,6 +70,7 @@ class ConfidenceSet:
         self.ancest_mat = self._build_ancestral_matrix()
         self.results: Optional[pd.DataFrame] = None
         self.cutoff, self.initial_track = self._calculate_cutoff()
+        self.bootstrap_indices = [np.random.choice(self.n, self.n, replace=True) for _ in range(self.bs)] # shape (bs, n)
 
     def _calculate_cutoff(self) -> Tuple[float, np.ndarray]:
         """
@@ -187,7 +187,8 @@ class ConfidenceSet:
         
         p_vals_result = bnb_helper_anm(ancest=ancest_mat_subset, children=Y_children, G=G_ancest,
                                            withinAgg=self.agg_type, aggType=self.agg_type, 
-                                           bs=self.bs, intercept=self.intercept)
+                                           bs=self.bs, intercept=self.intercept,
+                                           bootstrap_indices=self.bootstrap_indices)
         ## data frame with:
         ## Column 1: p-values (converted to uniform)
         ## Column 2: possible children

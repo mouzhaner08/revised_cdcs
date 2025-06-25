@@ -1,6 +1,6 @@
 import numpy as np
 
-def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept):
+def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept, bootstrap_indices=None):
     """
     Python equivalent of bnbHelperanm.cpp
 
@@ -69,7 +69,10 @@ def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept):
         # Bootstrap null distribution
         null_dist = np.zeros(bs)
         for b in range(bs):
-            rand_idx = np.random.randint(0, n, n)
+            if bootstrap_indices is not None:
+                rand_idx = bootstrap_indices[b]
+            else:
+                rand_idx = np.random.randint(0, n, n)
             res_b = res[rand_idx]
 
             statMat_b = np.abs(np.einsum('knq,n->kq', Q, res_b) / np.sqrt(n - p))

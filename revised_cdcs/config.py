@@ -13,7 +13,7 @@ H: list of test functions hj
 L: num of residual bootstrap 
 """
 # global parameters
-p = 3    # [10, 15, 20, 30, 45]
+p = 5    # [10, 15, 20, 30, 45]
 dist_list = ['unif']    # ['unif', 'lognormal', 'gamma', 'weibull', 'laplace']
 n_list = [1000]    #n_list = [500, 1000, 2500, 5000]
 n_simulations = 100
@@ -27,4 +27,4 @@ parent_prob = 1/3
 low_scale = 0.8
 high_scale = 1.0
 coef = 1.0
-uniqueTop = 'T'
+uniqueTop = 'F'

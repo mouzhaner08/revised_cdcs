@@ -25,6 +25,7 @@ Clone the repository and install the package in **editable mode**:
 git clone https://github.com/mouzhaner08/revised_cdcs.git
 cd revised_cdcs
 pip install -e .
+```
 
 
 ## How to Run Simulations
