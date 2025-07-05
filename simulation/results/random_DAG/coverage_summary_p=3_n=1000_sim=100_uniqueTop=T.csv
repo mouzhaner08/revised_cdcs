@@ -1,2 +1,0 @@
-dist,p,n,permutation,avg_true_orderings,std_true_orderings,avg_set_size,std_set_size,sim_coverage,marginal_coverage
-unif,3,1000,6,1.0,0.0,3.26,1.6650525517232182,0.91,0.91

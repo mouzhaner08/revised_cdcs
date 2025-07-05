@@ -73,8 +73,8 @@ def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept, boots
                 rand_idx = bootstrap_indices[b]
             else:
                 rand_idx = np.random.randint(0, n, n)
-            res_b = res[rand_idx]
 
+            res_b = res[rand_idx]
             statMat_b = np.abs(np.einsum('knq,n->kq', Q, res_b) / np.sqrt(n - p))
 
             if withinAgg == 1:
