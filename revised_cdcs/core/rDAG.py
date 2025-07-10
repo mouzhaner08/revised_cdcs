@@ -30,7 +30,7 @@ class GenerateCausalGraph:
     parent_prob : float
         Probability of including an edge u → v for u < v–1.
     """
-    def __init__(self, p:int, n:int, error_dist:str, coef:list, 
+    def __init__(self, p:int, n:int, error_dist:str, coef:int, 
                  low_scale:int, high_scale:int, uniqueTop:str,
                  parent_prob:int):
         self.p = p
