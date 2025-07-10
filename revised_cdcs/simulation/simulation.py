@@ -4,9 +4,9 @@ import pandas as pd
 from tqdm import tqdm
 from itertools import product
 from math import factorial
-from core.testAn import compute_test_tensor_G
-from core.bnb import ConfidenceSet
-from core.rDAG import GenerateCausalGraph
+from ..core.testAn import compute_test_tensor_G
+from ..core.bnb import ConfidenceSet
+from ..core.rDAG import GenerateCausalGraph
 
 
 def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_true_orderings, bs, alpha, K):

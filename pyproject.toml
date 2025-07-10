@@ -1,3 +1,21 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "revised_cdcs"
+version = "0.1.0"
+description = "A Python implementation of confidence sets for causal orderings."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "Zhaner Mou", email = "zhmou@ucsd.edu"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
