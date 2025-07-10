@@ -1,5 +1,7 @@
 import numpy as np
 from typing import List, Tuple
+import networkx as nx
+import matplotlib.pyplot as plt
 
 class GenerateCausalGraph:
     """
@@ -138,4 +140,35 @@ class GenerateCausalGraph:
         backtrack([], list(range(self.p)), in_degree.copy())
         return orderings
 
-    
+    def ordering_to_dag(self, ordering, plot=False, save_path=None):
+        """
+        Given a topological causal ordering, construct a fully connected DAG.
+
+        Parameters:
+            ordering (list or tuple): topological ordering of variables (e.g. [0, 1, 2])
+            plot (bool): whether to visualize the DAG
+            save_path (str or None): if provided, saves the plot to file
+
+        Returns:
+                G (nx.DiGraph): the fully connected DAG consistent with the ordering
+        """
+        G = nx.DiGraph()
+
+        # Add all nodes
+        G.add_nodes_from(ordering)
+
+        # Add directed edges from every earlier node to each later one
+        for i in range(len(ordering)):
+            for j in range(i+1, len(ordering)):
+                G.add_edge(ordering[i], ordering[j])
+
+        # Optional visualization
+        if plot:
+            pos = nx.spring_layout(G, seed=42)
+            nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=800, arrows=True)
+            plt.title("Fully Connected DAG from Causal Ordering")
+            if save_path:
+                plt.savefig(save_path, dpi=300)
+            plt.show()
+
+        return G

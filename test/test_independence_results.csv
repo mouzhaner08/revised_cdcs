@@ -1,0 +1,5 @@
+Scenario,TypeIError
+"X~Normal, Y~Laplace",0.036
+"X~Normal, Y~Uniform",0.041
+"X~Laplace, Y~Uniform",0.046
+"X~Laplace, Y=|X|^2.5+e",1.0
