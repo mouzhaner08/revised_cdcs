@@ -3,8 +3,8 @@ import pandas as pd
 from scipy import stats
 from scipy.special import eval_hermite
 from typing import List, Tuple, Dict, Optional
-from core.bnb_helper_anm import bnb_helper_anm
-from core.testAn import compute_test_tensor_G
+from .bnb_helper_anm import bnb_helper_anm
+from .testAn import compute_test_tensor_G
 
 def map_var_to_indices(variables, K):
     """
