@@ -163,5 +163,4 @@ def simulation(p = 5,
     df_summary.to_csv(output_path, index=False)
     print(df_summary)
 
-if __name__ == "__main__":
-    simulation(random_DAG=False, p=3, dist_list=['unif'], n_list=[500, 1000])
+simulation(p=3, dist_list=['unif'], n_list=[500])
