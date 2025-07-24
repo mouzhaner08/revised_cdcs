@@ -88,7 +88,7 @@ class GenerateCausalGraph:
             B[v-1, :v-1] = parents
         return B
     
-    def generate_data(self, B: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def generate_data(self, B: np.ndarray):
         """
         Simulate data Y from the model using the DAG structure B and return B, data Y,
         the raw error terms, and the error scales.

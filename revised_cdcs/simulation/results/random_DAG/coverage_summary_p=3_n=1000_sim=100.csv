@@ -1,0 +1,24 @@
+Scenario,RejectionRate
+Independent Normal-Uniform,0.13
+Independent Laplace-Uniform,0.27
+Dependent Nonlinear,1.0
+Dependent Sine,1.0
+Mixture of Gaussians,1.0
+XOR Pattern,0.78
+Multivariate Independent,0.29
+Multivariate Dependent,1.0
+Complex Interaction,0.0
+
+
+
+# fixed bootstrap idx
+dist,p,n,permutation,avg_true_orderings,std_true_orderings,avg_set_size,std_set_size,sim_coverage,marginal_coverage,runtime_sec
+unif,3,1000,6,3.47,1.7913961036018808,4.31,1.741809404039374,0.83,0.91,148.97355580329895
+unif,5,1000,120,18.81,18.188839985001792,73.2,33.23070868940354,0.77,0.9268984848484848,1393.1555416584015
+
+# rademacher bootstrap
+dist,p,n,permutation,avg_true_orderings,std_true_orderings,avg_set_size,std_set_size,sim_coverage,marginal_coverage,runtime_sec
+unif,3,1000,6,3.67,1.7381311803198283,4.22,1.7468829382646107,0.78,0.9,183.88442277908325
+unif,5,1000,120,20.26,16.959139129094964,58.7,32.28854285965844,0.72,0.8932222222222223,1704.3971512317657
+
+

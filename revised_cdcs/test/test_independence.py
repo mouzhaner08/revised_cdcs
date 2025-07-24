@@ -1,5 +1,9 @@
+import os
 import numpy as np
 import pandas as pd
+from tqdm import trange
+from sklearn.linear_model import LinearRegression
+from revised_cdcs.test import generate_scenarios, get_scenario_description
 
 def scale(x):
     """Standardize a 1D array to mean 0 and std 1."""
@@ -9,12 +13,12 @@ def compute_test_tensor_G(Y: np.ndarray) -> np.ndarray:
     """
     Compute test tensor G (n x k x p), where:
     - n = number of samples
-    - p = number of variables (here: 1)
+    - p = number of variables
     - k = 7 test functions: sin/cos (2), poly2, poly3, sign * |x|^2.5
     """
     n, p = Y.shape
-    J = 2
-    k = 2 * J + 3
+    J = 2  # num of sin/cos frequencies
+    k = 2 * J + 3  # total num of test functions
     G = np.zeros((n, k, p))
 
     for u in range(p):
@@ -26,81 +30,145 @@ def compute_test_tensor_G(Y: np.ndarray) -> np.ndarray:
         G[:, 6, u] = scale(np.sign(Y[:, u]) * np.abs(Y[:, u]) ** 2.5)
     return G
 
-def compute_statistic(eta: np.ndarray, G: np.ndarray, norm: str = 'inf') -> float:
+def compute_statistic(eta: np.ndarray, G: np.ndarray, norm: str = 'inf'):
     """
-    Compute test statistic || (1/n) sum eta_i * G[i, j, u] ||_norm
-    Requires G to be (n, k, 1).
+    Compute test statistic that which quantifies the dependence between a variable eta 
+    and a fixed set of test functions stored in G.
     """
-    means = (eta[:, None] * G[:, :, 0]).mean(axis=0)  # shape (k,)
+    n, k, p = G.shape
+    means = (eta[:, None, None] * G).mean(axis=0) * np.sqrt(n)  # shape (k, p)
+    
     if norm == 'l2':
-        return np.linalg.norm(means, ord=2)
+       return np.linalg.norm(means, ord=2)
     elif norm == 'l1':
-        return np.linalg.norm(means, ord=1)
+         return np.linalg.norm(means, ord=1)
     elif norm == 'inf':
-        return np.linalg.norm(means, ord=np.inf)
+         return np.linalg.norm(means, ord=np.inf)
     else:
         raise ValueError("Invalid norm")
 
-def test_independence_pval(X: np.ndarray, Y: np.ndarray, B: int = 400, norm: str = 'inf') -> float:
+def test_independence_pval(X: np.ndarray, Y: np.ndarray, B: int = 400, norm: str = 'inf'):
     """
-    Perform nonparametric independence test using Wang et al.'s method.
-    Inputs:
-        X, Y: shape (n,) arrays
-        B: number of bootstrap resamples
-        norm: which norm to aggregate over test functions
-    Returns:
-        p-value
-    """
-    n = len(X)
+    Test whether Y is conditionally independent of X using residual-based test statistic.
     
-    eta = X.copy()
-    G = compute_test_tensor_G(Y.reshape(-1, 1))
-    T_obs = compute_statistic(eta, G, norm=norm)
+    Parameters:
+    - X: (n, dx) predictor variables
+    - Y: (n, dy) response variables
+    - B: number of bootstrap resamples
+    - norm: norm used in test statistic ('inf', 'l1', 'l2')
+    
+    Returns:
+    - pvals: array of p-values for each child variable
+    """
+    # Ensure X and Y are 2D arrays
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    if Y.ndim == 1:
+        Y = Y.reshape(-1, 1)
+        
+    n, dx = X.shape
+    _, dy = Y.shape
 
+    # Step 1: Fit linear regression of Y on X (with intercept)
+    model = LinearRegression().fit(X, Y)
+    Y_hat = model.predict(X)
+    eta = (Y - Y_hat).flatten()  # shape (n,)
+    
+    # Step 2: Compute test functions on regressors
+    G = compute_test_tensor_G(X) # shape (n, k, p)
+
+    # Step 3: Compute observed statistic and null distribution
+    T_obs = compute_statistic(eta, G, norm=norm)
     null_dist = np.zeros(B)
+
     for b in range(B):
         eta_b = eta[np.random.choice(n, n, replace=True)]
         null_dist[b] = compute_statistic(eta_b, G, norm=norm)
 
+    # Step 4: Compute empirical p-value
     pval = (np.sum(null_dist >= T_obs) + 1) / (B + 1)
+    
     return pval
 
-def evaluate_test_performance(n: int = 500, reps: int = 1000, B: int = 400,
-                              alpha: float = 0.05, norm: str = 'inf') -> float:
+def evaluate_test_performance(X, Y, reps: int=100, alpha: float=0.05, B: int=400,
+                              norm: str='inf'):
     """
-    Evaluate Type I error and power across 4 defined scenarios.
-    Saves results to 'typeI_error_results.csv'.
+    Evaluates the power or type I error of the independence test on fixed (X, Y) data.
+    
+    Parameters
+    ----------
+    X: np.ndarray
+        A 1D or 2D array of shape (n,) or (n, d1) representing variable X.
+    Y: np.ndarray
+        A 1D or 2D array of shape (n,) or (n, d2) representing variable Y.
+    reps: int, optional
+        Number of repetitions to simulate the test, by default 100.
+    alpha: float, optional
+        Significance level for hypothesis testing, by default 0.05.
+    B: int, optional
+        number of bootstrap resamples, by default 400.
+    norm: str, optional
+        which norm to aggregate over test functions, by default 'inf'.
+    
+    Returns
+    -------
+    float
+        Estimated type I error rate,
+        computed as the proportion of times the null hypothesis is rejected.
     """
+    n = X.shape[0]
+    pvals = []
+    for _ in trange(reps, desc="Running tests"):
+        idx = np.random.choice(n, n, replace=True)
+        pval = test_independence_pval(X=X[idx], Y=Y[idx], B=B, norm=norm)
+        pvals.append(pval)
+    
+    pvals = np.array(pvals)
+    rate = np.mean(pvals < alpha)
+
+    print(f"Rejection rate at alpha={alpha:.2f}: {rate:.3f}")
+    
+    return rate
+
+def main(n=1000, reps=100, alpha=0.05, B=400, norm='inf'):
+    scenarios = generate_scenarios()
     results = []
+    
+    # Classify scenarios for the output
+    scenario_types = {
+        **{f"Independent GG {i}": "Independent (G-G)" for i in range(1, 11)},
+        **{f"Independent GN {i}": "Independent (G-NG)" for i in range(1, 11)},
+        **{f"Independent NN {i}": "Independent (NG-NG)" for i in range(1, 11)},
+        **{f"Subtle Weak {i}": "Subtle Dependent" for i in range(1, 6)},
+        **{f"Subtle Cond {i}": "Subtle Dependent" for i in range(1, 6)},
+        **{f"Subtle Higher {i}": "Subtle Dependent" for i in range(1, 6)},
+        **{f"Dependent Strong {i}": "Clearly Dependent" for i in range(1, 6)},
+        **{f"Dependent Mixed {i}": "Clearly Dependent" for i in range(1, 6)},
+    }
+    
+    for name, gen_func in scenarios.items():
+        print(f"Testing scenario: {name}")
+        X, Y = gen_func(n)
+        rejection_rate = evaluate_test_performance(X, Y, reps=reps, alpha=alpha, B=B, norm=norm)
+        print(f"Rejection rate for '{name}': {rejection_rate:.3f}\n")
+        
+        results.append({
+            "Scenario": name,
+            "Type": scenario_types[name],
+            "RejectionRate": rejection_rate,
+            "ExpectedIndependent": "Independent" in scenario_types[name],
+            "Description": get_scenario_description(name)
+        })
+    
+    # Define the output directory and file path
+    output_dir = os.path.join(os.path.dirname(__file__), 'results')
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir,f"independence_test_results_n={n}.csv")
+    
+    df_results = pd.DataFrame(results)
+    df_results.to_csv(output_path, index=False)
+    print(f"Results saved to {output_path}")
+    return df_results
 
-    scenarios = [
-        ("X~Normal, Y~Laplace", lambda n: np.random.normal(0, 1, n), lambda n: np.random.laplace(0, 1, n)),
-        ("X~Normal, Y~Uniform", lambda n: np.random.normal(0, 1, n), lambda n: np.random.uniform(-2, 2, n)),
-        ("X~Laplace, Y~Uniform", lambda n: np.random.laplace(0, 1, n), lambda n: np.random.uniform(-2, 2, n)),
-        ("X~Laplace, Y=|X|^2.5+e", 
-         lambda n: np.random.laplace(0, 1, n),
-         lambda n, X=None: np.sign(X) * np.abs(X)**2.5 + np.random.normal(0, 0.5, n),
-         True)
-    ]
-
-    for name, X_gen, Y_gen, *uses_X in scenarios:
-        pvals = []
-        for i in range(reps):
-            X = X_gen(n)
-            if uses_X and uses_X[0]:
-                Y = Y_gen(n, X=X)
-            else:
-                Y = Y_gen(n)
-            p = test_independence_pval(X, Y, B=B, norm=norm)
-            pvals.append(p)
-        type_I_error = np.mean(np.array(pvals) < alpha)
-        results.append({"Scenario": name, "TypeIError": type_I_error})
-
-    df = pd.DataFrame(results)
-    df.to_csv("typeI_error_results.csv", index=False)
-    return df
-
-# Main execution
 if __name__ == "__main__":
-    df_results = evaluate_test_performance(n=500, reps=1000, B=400, alpha=0.05, norm='inf')
-    print(df_results)
+    df_results = main()

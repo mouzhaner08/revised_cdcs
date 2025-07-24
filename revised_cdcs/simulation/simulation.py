@@ -1,12 +1,13 @@
 import os
+import time
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from itertools import product
 from math import factorial
-from ..core.testAn import compute_test_tensor_G
-from ..core.bnb import ConfidenceSet
-from ..core.rDAG import GenerateCausalGraph
+from revised_cdcs.core.testAn import compute_test_tensor_G
+from revised_cdcs.core.bnb import ConfidenceSet
+from revised_cdcs.core.rDAG import GenerateCausalGraph
 
 
 def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_true_orderings, bs, alpha, K):
@@ -56,8 +57,8 @@ def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_tr
     sim_coverage[i] = int(all(matches))
 
 
-def run_simulation(random_DAG:bool, n_simulations:int, p:int, n:int, dist:str, coef:int, 
-                   low_scale:int, high_scale:int, uniqueTop:str, parent_prob:int, bs:int, K:int, alpha:int):
+def run_simulation(random_DAG:bool, n_simulations:int, p:int, n:int, dist:str, coef, 
+                   low_scale, high_scale, uniqueTop:str, parent_prob, bs:int, K:int, alpha:float):
     """
     Run multiple simulations to evaluate confidence set performance under a given error distribution.
 
@@ -124,12 +125,16 @@ def simulation(p = 5,
 
     for dist, n in product(dist_list, n_list):
         print(f"\nRunning p={p}, n={n}, dist={dist}")
-        size, num_true_orderings, prop_true_orderings_covered, sim_coverage = run_simulation(random_DAG=random_DAG,
-                                                                                              n_simulations=n_simulations, 
-                                                                                              p=p, n=n, dist=dist, coef=coef, 
-                                                                                              low_scale=low_scale, high_scale=high_scale, 
-                                                                                              uniqueTop=uniqueTop, parent_prob=parent_prob,
-                                                                                              bs=bs, K=K, alpha=alpha)
+        start_time = time.time()
+
+        size, num_true_orderings, prop_true_orderings_covered, sim_coverage = run_simulation(
+            random_DAG=random_DAG, n_simulations=n_simulations, p=p, n=n, dist=dist, coef=coef, 
+            low_scale=low_scale, high_scale=high_scale, uniqueTop=uniqueTop, parent_prob=parent_prob,
+            bs=bs, K=K, alpha=alpha)
+        
+        end_time = time.time()
+        total_seconds = end_time - start_time
+        
         results.append({
             'dist': dist,
             'p': p,
@@ -139,14 +144,16 @@ def simulation(p = 5,
             'avg_true_orderings': num_true_orderings.mean(),
             'std_true_orderings': num_true_orderings.std(),
             'sim_coverage': sim_coverage.mean(),
-            'marginal_coverage': prop_true_orderings_covered.mean()
+            'marginal_coverage': prop_true_orderings_covered.mean(),
+            'runtime_sec': total_seconds
         })
 
     # Create the summary DataFrame
     df_summary = pd.DataFrame(results)
     df_summary['permutation'] = factorial(p)
     df_summary = df_summary[['dist', 'p', 'n', 'permutation', 'avg_true_orderings', 'std_true_orderings',
-                             'avg_set_size', 'std_set_size', 'sim_coverage', 'marginal_coverage']]
+                             'avg_set_size', 'std_set_size', 'sim_coverage', 'marginal_coverage',
+                             'runtime_sec']]
 
     # Define the output directory and file path
     if random_DAG:
@@ -156,11 +163,12 @@ def simulation(p = 5,
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(
         output_dir,
-        f"coverage_summary_p={p}_n={n}_sim={n_simulations}.csv"
+        f"coverage_summary_p={p}_n={max(n_list)}_sim={n_simulations}.csv"
     )
 
     # Save the results to a CSV file
     df_summary.to_csv(output_path, index=False)
     print(df_summary)
 
-simulation(p=3, dist_list=['unif'], n_list=[500])
+if __name__ == "__main__":
+    simulation(p=5, dist_list=['unif'], n_list=[1000])

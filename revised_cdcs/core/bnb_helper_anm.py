@@ -65,6 +65,14 @@ def bnb_helper_anm(ancest, children, G, withinAgg, aggType, bs, intercept, boots
             test_stat = np.linalg.norm(test_stat_vec, ord=np.inf)
         else:
             raise ValueError("Invalid aggType")
+        
+        # Bootstrap null distribution via sign-flip
+        # null_dist = np.zeros(bs)
+        # for b in range(bs):
+        #    signs = np.random.choice([-1, 1], size=n)
+        #    res_b = res * signs  # Rademacher bootstrap
+
+        #    statMat_b = np.abs(np.einsum('knq,n->kq', Q, res_b) / np.sqrt(n))
 
         # Bootstrap null distribution
         null_dist = np.zeros(bs)

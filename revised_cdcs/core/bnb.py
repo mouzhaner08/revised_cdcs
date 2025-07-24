@@ -72,7 +72,7 @@ class ConfidenceSet:
         self.cutoff, self.initial_track = self._calculate_cutoff()
         self.bootstrap_indices = [np.random.choice(self.n, self.n, replace=True) for _ in range(self.bs)] # shape (bs, n)
 
-    def _calculate_cutoff(self) -> Tuple[float, np.ndarray]:
+    def _calculate_cutoff(self):
         """
         Calculate cutoff and initial tracking values
         """

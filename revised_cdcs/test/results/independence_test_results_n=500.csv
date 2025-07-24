@@ -1,0 +1,56 @@
+Scenario,Type,RejectionRate,ExpectedIndependent,Description
+Independent GG 1,Independent (G-G),0.04,True,Independent Gaussian-Gaussian variables
+Independent GG 2,Independent (G-G),0.09,True,Independent Gaussian-Gaussian variables
+Independent GG 3,Independent (G-G),0.21,True,Independent Gaussian-Gaussian variables
+Independent GG 4,Independent (G-G),0.14,True,Independent Gaussian-Gaussian variables
+Independent GG 5,Independent (G-G),0.47,True,Independent Gaussian-Gaussian variables
+Independent GG 6,Independent (G-G),0.37,True,Independent Gaussian-Gaussian variables
+Independent GG 7,Independent (G-G),0.12,True,Independent Gaussian-Gaussian variables
+Independent GG 8,Independent (G-G),0.06,True,Independent Gaussian-Gaussian variables
+Independent GG 9,Independent (G-G),0.23,True,Independent Gaussian-Gaussian variables
+Independent GG 10,Independent (G-G),0.15,True,Independent Gaussian-Gaussian variables
+Independent GN 1,Independent (G-NG),0.28,True,Independent Gaussian-NonGaussian variables
+Independent GN 2,Independent (G-NG),0.05,True,Independent Gaussian-NonGaussian variables
+Independent GN 3,Independent (G-NG),0.06,True,Independent Gaussian-NonGaussian variables
+Independent GN 4,Independent (G-NG),0.14,True,Independent Gaussian-NonGaussian variables
+Independent GN 5,Independent (G-NG),0.09,True,Independent Gaussian-NonGaussian variables
+Independent GN 6,Independent (G-NG),0.36,True,Independent Gaussian-NonGaussian variables
+Independent GN 7,Independent (G-NG),0.04,True,Independent Gaussian-NonGaussian variables
+Independent GN 8,Independent (G-NG),0.04,True,Independent Gaussian-NonGaussian variables
+Independent GN 9,Independent (G-NG),0.62,True,Independent Gaussian-NonGaussian variables
+Independent GN 10,Independent (G-NG),0.42,True,Independent Gaussian-NonGaussian variables
+Independent NN 1,Independent (NG-NG),0.02,True,Independent NonGaussian-NonGaussian variables
+Independent NN 2,Independent (NG-NG),0.05,True,Independent NonGaussian-NonGaussian variables
+Independent NN 3,Independent (NG-NG),0.02,True,Independent NonGaussian-NonGaussian variables
+Independent NN 4,Independent (NG-NG),0.02,True,Independent NonGaussian-NonGaussian variables
+Independent NN 5,Independent (NG-NG),0.09,True,Independent NonGaussian-NonGaussian variables
+Independent NN 6,Independent (NG-NG),0.05,True,Independent NonGaussian-NonGaussian variables
+Independent NN 7,Independent (NG-NG),0.0,True,Independent NonGaussian-NonGaussian variables
+Independent NN 8,Independent (NG-NG),0.05,True,Independent NonGaussian-NonGaussian variables
+Independent NN 9,Independent (NG-NG),0.31,True,Independent NonGaussian-NonGaussian variables
+Independent NN 10,Independent (NG-NG),0.13,True,Independent NonGaussian-NonGaussian variables
+Subtle Weak 1,Subtle Dependent,1.0,False,Weak nonlinear dependence (hard to detect)
+Subtle Weak 2,Subtle Dependent,0.53,False,Weak nonlinear dependence (hard to detect)
+Subtle Weak 3,Subtle Dependent,0.12,False,Weak nonlinear dependence (hard to detect)
+Subtle Weak 4,Subtle Dependent,0.14,False,Weak nonlinear dependence (hard to detect)
+Subtle Weak 5,Subtle Dependent,0.59,False,Weak nonlinear dependence (hard to detect)
+Subtle Cond 1,Subtle Dependent,1.0,False,Conditional dependence through latent variable
+Subtle Cond 2,Subtle Dependent,1.0,False,Conditional dependence through latent variable
+Subtle Cond 3,Subtle Dependent,1.0,False,Conditional dependence through latent variable
+Subtle Cond 4,Subtle Dependent,1.0,False,Conditional dependence through latent variable
+Subtle Cond 5,Subtle Dependent,1.0,False,Conditional dependence through latent variable
+Subtle Higher 1,Subtle Dependent,0.69,False,Higher-order interaction dependence
+Subtle Higher 2,Subtle Dependent,0.13,False,Higher-order interaction dependence
+Subtle Higher 3,Subtle Dependent,0.22,False,Higher-order interaction dependence
+Subtle Higher 4,Subtle Dependent,0.65,False,Higher-order interaction dependence
+Subtle Higher 5,Subtle Dependent,0.92,False,Higher-order interaction dependence
+Dependent Strong 1,Clearly Dependent,1.0,False,Strong nonlinear dependence (easy to detect)
+Dependent Strong 2,Clearly Dependent,0.33,False,Strong nonlinear dependence (easy to detect)
+Dependent Strong 3,Clearly Dependent,1.0,False,Strong nonlinear dependence (easy to detect)
+Dependent Strong 4,Clearly Dependent,0.22,False,Strong nonlinear dependence (easy to detect)
+Dependent Strong 5,Clearly Dependent,1.0,False,Strong nonlinear dependence (easy to detect)
+Dependent Mixed 1,Clearly Dependent,1.0,False,Dependence between mixed variable types
+Dependent Mixed 2,Clearly Dependent,1.0,False,Dependence between mixed variable types
+Dependent Mixed 3,Clearly Dependent,1.0,False,Dependence between mixed variable types
+Dependent Mixed 4,Clearly Dependent,0.0,False,Dependence between mixed variable types
+Dependent Mixed 5,Clearly Dependent,0.01,False,Dependence between mixed variable types
