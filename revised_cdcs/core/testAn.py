@@ -1,5 +1,9 @@
 import numpy as np
-from sklearn.preprocessing import SplineTransformer, scale
+from sklearn.preprocessing import SplineTransformer
+
+def scale(x):
+    """Standardize a 1D array to mean 0 and std 1."""
+    return (x - np.mean(x)) / np.std(x)
 
 def compute_test_tensor_G(Y: np.ndarray) -> np.ndarray:
     """

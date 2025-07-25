@@ -3,32 +3,8 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 from sklearn.linear_model import LinearRegression
+from revised_cdcs.core import compute_test_tensor_G
 from revised_cdcs.test import generate_scenarios, get_scenario_description
-
-def scale(x):
-    """Standardize a 1D array to mean 0 and std 1."""
-    return (x - np.mean(x)) / np.std(x)
-
-def compute_test_tensor_G(Y: np.ndarray) -> np.ndarray:
-    """
-    Compute test tensor G (n x k x p), where:
-    - n = number of samples
-    - p = number of variables
-    - k = 7 test functions: sin/cos (2), poly2, poly3, sign * |x|^2.5
-    """
-    n, p = Y.shape
-    J = 2  # num of sin/cos frequencies
-    k = 2 * J + 3  # total num of test functions
-    G = np.zeros((n, k, p))
-
-    for u in range(p):
-        for j in range(1, J + 1):
-            G[:, 2 * j - 2, u] = np.sin(j * Y[:, u])
-            G[:, 2 * j - 1, u] = np.cos(j * Y[:, u])
-        G[:, 4, u] = scale(Y[:, u] ** 2)
-        G[:, 5, u] = scale(Y[:, u] ** 3)
-        G[:, 6, u] = scale(np.sign(Y[:, u]) * np.abs(Y[:, u]) ** 2.5)
-    return G
 
 def compute_statistic(eta: np.ndarray, G: np.ndarray, norm: str = 'inf'):
     """
@@ -130,7 +106,7 @@ def evaluate_test_performance(X, Y, reps: int=100, alpha: float=0.05, B: int=400
     
     return rate
 
-def main(n=1000, reps=100, alpha=0.05, B=400, norm='inf'):
+def main(n=2500, reps=100, alpha=0.05, B=400, norm='inf'):
     scenarios = generate_scenarios()
     results = []
     

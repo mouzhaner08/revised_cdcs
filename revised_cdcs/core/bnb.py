@@ -3,10 +3,10 @@ import pandas as pd
 from scipy import stats
 from scipy.special import eval_hermite
 from typing import List, Tuple, Dict, Optional
-from .bnb_helper_anm import bnb_helper_anm
-from .testAn import compute_test_tensor_G
+from revised_cdcs.core.bnb_helper_anm import bnb_helper_anm
+from revised_cdcs.core.testAn import compute_test_tensor_G
 
-def map_var_to_indices(variables, K):
+def map_var_to_indices(variables, K) -> List[int]:
     """
     Placeholder for R's mapVarToInd
     Get Hermite basis column indices
@@ -20,7 +20,7 @@ def conv_to_count(pvals, bs):
     Convert discrete p-values to cts uniforms
     """
     cut_points = np.linspace(0, 1, bs+2)
-    indices = (pvals * bs).astype(int)
+    indices = np.clip((pvals * bs).astype(int), 0, bs)  # Clip to prevent out-of-bounds
     return np.random.uniform(cut_points[indices], cut_points[indices + 1])
 
 
@@ -52,8 +52,9 @@ class ConfidenceSet:
     pd.DataFrame
         A dataframe with p-values and corresponding orderings
     """
-    def __init__(self, Y:np.ndarray, bs: int = 200,
-                 alpha: float = 0.05, basis: str = 'bspline',agg_type: int = 3, p_value_agg: str = "tippett", 
+    def __init__(self, Y:np.ndarray, bs: int = 400,
+                 alpha: float = 0.05, basis: str = 'bspline', 
+                 agg_type: int = 3, p_value_agg: str = "tippett", 
                  K: int = 5, intercept: bool = True, verbose: bool = True):
         self.Y = Y
         self.G = compute_test_tensor_G(self.Y) # shape (n, k=7, p)
@@ -101,9 +102,9 @@ class ConfidenceSet:
             for i in range(self.p):
                 ancest_mat[:, (self.K * i):(self.K * (i + 1))] = self._get_hermite(self.Y[:, i], self.K)
         
-        elif self.basis == "bspline":
-            for i in range(self.p):
-                ancest_mat[:, (self.K * i):(self.K * (i + 1))] = self._bs_basis(self.Y[:, i], self.K)
+        # elif self.basis == "bspline":
+        #    for i in range(self.p):
+        #        ancest_mat[:, (self.K * i):(self.K * (i + 1))] = self._bs_basis(self.Y[:, i], self.K)
         
         return ancest_mat
 
@@ -121,9 +122,15 @@ class ConfidenceSet:
         fresh_p_vals = list(unique_res[match_ind]["pVals"])
         possible_children = list(unique_res[match_ind]["possibleChildren"])
         
-        # update orderings using either fisher or tippett
-        new_track = np.minimum(current_track, fresh_p_vals)
-        continue_on = new_track > self.cutoff
+        # Fixed: Handle p-value aggregation correctly
+        if self.p_value_agg == "fisher":
+            # For Fisher method, we combine -2*log(p) values
+            current_track_expanded = np.full(len(fresh_p_vals), current_track)
+            new_track = current_track_expanded + (-2 * np.log(np.maximum(fresh_p_vals, 1e-16)))
+            continue_on = new_track < self.cutoff  # For Fisher, we want values below cutoff
+        else:  # Tippett method
+            new_track = np.minimum(current_track, fresh_p_vals)
+            continue_on = new_track > self.cutoff
         
         # Check if there are any orderings which haven't passed the cut-off 
         # i.e., still viable orderings
@@ -142,9 +149,9 @@ class ConfidenceSet:
             
             # Combine new_track, seq_matrix, and possible_children
             new_data = np.column_stack([
-                new_track_valid,
+                new_track_valid.reshape(-1, 1),
                 seq_matrix,
-                possible_children_valid
+                possible_children_valid.reshape(-1, 1)
             ])
             
             new_seq = pd.DataFrame(new_data)
@@ -173,6 +180,13 @@ class ConfidenceSet:
         
         ## set of any nodes not in the set which could be potential children
         possible_children = [i for i in range(1, self.p+1) if i not in ancest]
+
+        # Handle edge case: if no possible children, return empty result
+        if not possible_children:
+            return {
+                "pVals": [],
+                "possibleChildren": []
+            }
         
         ## subtract 1 for cpp indexing
         ancest_idx = [a - 1 for a in ancest]  # convert to 0-based
@@ -180,20 +194,35 @@ class ConfidenceSet:
         
         # Get the ancestral matrix columns and Y columns for possible children
         ancest_mat_subset = self.ancest_mat[:, mapped_indices] if mapped_indices else self.ancest_mat[:, :0]
-        Y_children = self.Y[:, [i-1 for i in possible_children]] if possible_children else self.Y[:, :0]
+        Y_children = self.Y[:, [i-1 for i in possible_children]]
 
-        G_list = [np.repeat(self.G[:, :, i][:, :, np.newaxis], self.K, axis=2) for i in ancest_idx]
-        G_ancest = np.concatenate(G_list, axis=2) if G_list else self.G[:, :, :0]
+        # Fixed: Build G_ancest correctly - it should have shape (n, k, num_ancestor_basis_functions)
+        # Each ancestor contributes K basis functions, so total is len(ancest_idx) * K
+        if ancest_idx:
+            G_list = []
+            for i in ancest_idx:
+                # For each ancestor, replicate its G matrix K times along the last dimension
+                G_i = self.G[:, :, i]  # Shape: (n, k)
+                G_i_expanded = np.repeat(G_i[:, :, np.newaxis], self.K, axis=2)  # Shape: (n, k, K)
+                G_list.append(G_i_expanded)
+            G_ancest = np.concatenate(G_list, axis=2)  # Shape: (n, k, len(ancest_idx)*K)
+        else:
+            G_ancest = np.zeros((self.n, self.k, 0))
         
-        p_vals_result = bnb_helper_anm(ancest=ancest_mat_subset, children=Y_children, G=G_ancest,
-                                           withinAgg=self.agg_type, aggType=self.agg_type, 
-                                           bs=self.bs, intercept=self.intercept,
-                                           bootstrap_indices=self.bootstrap_indices)
+        p_vals_result = bnb_helper_anm(ancest=ancest_mat_subset, 
+                                       children=Y_children, 
+                                       G=G_ancest,
+                                       withinAgg=self.agg_type, 
+                                       aggType=self.agg_type, 
+                                       bs=self.bs, 
+                                       bootstrap_method=2, 
+                                       bootstrap_indices=self.bootstrap_indices
+                                       )
         ## data frame with:
         ## Column 1: p-values (converted to uniform)
         ## Column 2: possible children
         ret = {
-            "pVals": conv_to_count(p_vals_result, self.bs),
+            "pVals": conv_to_count(p_vals_result, self.bs).tolist(),
             "possibleChildren": possible_children
         }
         return ret
@@ -223,6 +252,8 @@ class ConfidenceSet:
             hash_values = []
             for idx in range(len(current_seq)):
                 seq_vals = current_seq.iloc[idx, 1:].values
+                # Filter out NaN values and convert to int
+                seq_vals = seq_vals[~pd.isna(seq_vals)].astype(int)
                 hash_val = ".".join(map(str, sorted(seq_vals)))
                 hash_values.append(hash_val)
             

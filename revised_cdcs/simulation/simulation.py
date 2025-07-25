@@ -57,8 +57,8 @@ def run_onceBnb(D, B, i, size, prop_true_orderings_covered, sim_coverage, num_tr
     sim_coverage[i] = int(all(matches))
 
 
-def run_simulation(random_DAG:bool, n_simulations:int, p:int, n:int, dist:str, coef, 
-                   low_scale, high_scale, uniqueTop:str, parent_prob, bs:int, K:int, alpha:float):
+def run_simulation(random_DAG:bool, n_simulations:int, p:int, n:int, dist, coef, 
+                   low_scale, high_scale, uniqueTop:bool, parent_prob, bs:int, K:int, alpha:float):
     """
     Run multiple simulations to evaluate confidence set performance under a given error distribution.
 
@@ -72,6 +72,8 @@ def run_simulation(random_DAG:bool, n_simulations:int, p:int, n:int, dist:str, c
         Number of samples per dataset.
     dist : str
         Error distribution type (e.g., 'unif', 'gauss', etc.).
+    K : int
+        Either the df for bsplines or the number of polynomial terms.
 
     ---------------------------------------------------------------------------
     OUTPUT:
@@ -118,7 +120,7 @@ def simulation(p = 5,
                low_scale = 0.8,
                high_scale = 1.0,
                coef = 1.0,
-               uniqueTop = 'F',
+               uniqueTop = False,
                random_DAG = True
 ):
     results = []

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Tuple
+from typing import List, Tuple, Literal
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -30,9 +30,15 @@ class GenerateCausalGraph:
     parent_prob : float
         Probability of including an edge u → v for u < v–1.
     """
-    def __init__(self, p:int, n:int, error_dist:str, coef:int, 
-                 low_scale:int, high_scale:int, uniqueTop:str,
-                 parent_prob:int):
+    def __init__(self, 
+                 p: int = 3, 
+                 n: int = 1000, 
+                 error_dist: Literal['gauss', 'unif', 'lognormal', 'gamma', 'weibull', 'laplace']='unif', 
+                 coef: float = 1.0, 
+                 low_scale: float = 0.8, 
+                 high_scale: float = 1.0, 
+                 uniqueTop: bool = False,
+                 parent_prob: float = 1/3):
         self.p = p
         self.n = n
         self.error_dist = error_dist
@@ -76,11 +82,13 @@ class GenerateCausalGraph:
         B = np.zeros((self.p, self.p))
         for v in range(2, self.p+1):
             # add edges u -> v with pre-assigned prob for any u < v-1
-            if self.uniqueTop == 'T':           
+            if self.uniqueTop == True:           
                 parents = np.random.choice(a=2, size=v-2, p=np.array([1-self.parent_prob, self.parent_prob]))
                 parents = np.append(parents, 1)
-            else:
+            elif self.uniqueTop == False:
                 parents = np.random.choice(a=2, size=v-1, p=np.array([1-self.parent_prob, self.parent_prob]))
+            else:
+                raise ValueError("uniqueTop must be either True or False")
             # each linear coefficient is drawn from beta = z x g
             z = np.random.choice([-1, 1], size=v-1, p=np.array([1/2, 1/2]))
             g = np.random.gamma(shape=self.n**(-1/10), scale=1, size=v-1)
